@@ -49,10 +49,10 @@ class App extends PureComponent {
     const result = await fetch(this.playlistUrl);
     const data = await result.json();
 
-    this.updateSate(data);
+    this.updateState(data);
   }
 
-  updateSate (data) {
+  updateState (data) {
     const updatedState = {
       tracks: [...data[0].tracks.map((track, index) => {
         return Object.assign({}, {
