@@ -1,3 +1,5 @@
+ARG dev
+
 FROM node:10-alpine
 
 RUN mkdir /app
@@ -12,4 +14,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD [ "npm", "start" ]
+CMD if [ "x$dev" = "x" ] ; then echo Argument not provided ; else npm start ; fi

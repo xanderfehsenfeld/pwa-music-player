@@ -6,6 +6,7 @@ services:
       - .:/app
       - /app/node_modules
     working_dir: /app
-    command: npm start
+    command: npm run ${command}
     ports:
       - 3000:3000
+
