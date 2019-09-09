@@ -1,12 +1,21 @@
 version: '3'
 services:
+  install:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    working_dir: /app
+
+    command: ["npm", "i"]
   dev:
     build: .
     volumes:
       - .:/app
       - /app/node_modules
     working_dir: /app
-    command: npm run ${command}
+
+    command: ["npm", "run", "${command}"]
     ports:
       - 3000:3000
 
