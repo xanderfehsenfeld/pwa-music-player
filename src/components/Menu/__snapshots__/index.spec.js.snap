@@ -22,13 +22,14 @@ exports[`Menu renders defaultProps 1`] = `
   <h1
     className="hidden menu__title"
   >
-    Now playing
+    
+    
+    
   </h1>
   <button
-    aria-label="about the app"
-    className="icon-button hidden icon-button icon-button--help"
-    name="about the app"
-    onClick={[Function]}
+    aria-label="add a song via youtube link"
+    className="icon-button  icon-button icon-button--help"
+    name="add a song via youtube link"
     tabIndex="0"
     type="button"
   >
@@ -36,22 +37,7 @@ exports[`Menu renders defaultProps 1`] = `
       className="icon icon--help"
       width={27}
     >
-      help-button.svg
-    </svg>
-  </button>
-  <button
-    aria-label="close about"
-    className="icon-button icon-button icon-button--close"
-    name="close about"
-    onClick={[Function]}
-    tabIndex="0"
-    type="button"
-  >
-    <svg
-      className="icon icon--close"
-      width={12}
-    >
-      close.svg
+      add-button.svg
     </svg>
   </button>
 </nav>

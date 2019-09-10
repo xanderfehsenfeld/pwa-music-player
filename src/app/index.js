@@ -14,6 +14,7 @@ import './style.scss'
 const List = lazy(() => import('../pages/List'))
 const About = lazy(() => import('../pages/About'))
 const Detail = lazy(() => import('../pages/Detail'))
+const Add = lazy(() => import('../pages/Add'))
 
 class App extends PureComponent {
   constructor(props) {
@@ -38,8 +39,12 @@ class App extends PureComponent {
     })
 
     this.setupAudio()
-
-    this.history.push('/', { view: 'home' })
+    if (this.history.location.pathname.includes('list')) {
+      this.history.push('/', { view: 'home' })
+      this.changeView('list')
+    } else {
+      this.history.push('/', { view: 'home' })
+    }
   }
 
   onStartClick = () => {
@@ -49,37 +54,40 @@ class App extends PureComponent {
   fetchPlayList = async () => {
     const db = firebase.firestore()
 
-    const rips = await db.collection('rips').get()
+    db.collection('rips').onSnapshot((rips) => {
+      const data = rips.docs.map((v) => v.data())
 
-    const data = rips.docs.map((v) => v.data())
-
-    this.updateState(data)
+      this.updateState(data)
+    })
   }
 
   updateState(tracks) {
     const updatedState = {
-      tracks: tracks.map(({ url, plainTextName, duration }, index) => {
-        return Object.assign(
-          {},
-          {
-            ...this.state.track,
-            id: index,
-            stream_url: url,
-            uri: url,
-            duration,
-            favoritings_count: 0,
-            artist: '',
-            artwork_url: '',
-            title: plainTextName,
-            permalink_url: plainTextName,
-            index,
-          },
-        )
-      }),
+      tracks: tracks.map(
+        ({ url, plainTextName, duration, state, albumArtwork }, index) => {
+          return Object.assign(
+            {},
+            {
+              ...this.state.track,
+              id: index,
+              stream_url: url,
+              uri: url,
+              duration: duration * 1000,
+              favoritings_count: 0,
+              artist: '',
+              artwork_url: albumArtwork || '',
+              title: plainTextName,
+              permalink_url: url,
+              index,
+              downloaded: state === 'finished',
+            },
+          )
+        },
+      ),
       playlistLoaded: true,
     }
 
-    this.setState(() => updatedState)
+    this.setState(updatedState)
   }
 
   changeView(view) {
@@ -239,7 +247,9 @@ class App extends PureComponent {
   onAboutClick = () => {
     this.changeView('about')
   }
-
+  onAddClick = () => {
+    this.changeView('add')
+  }
   onPlayNext = () => {
     this.changeTrack(this.getNextTrack())
   }
@@ -269,6 +279,7 @@ class App extends PureComponent {
             onBackClick={this.onBackClick}
             onAboutClick={this.onAboutClick}
             onCloseClick={this.onBackClick}
+            onAddClick={this.onAddClick}
           />
           <div className="page-wrapper">
             <Page className="home" active={this.state.currentView === 'home'}>
@@ -295,6 +306,9 @@ class App extends PureComponent {
                   onPlayPrev={this.onPlayPrev}
                   onPauseClick={this.onPauseClick}
                 />
+              </Page>
+              <Page className="add" active={this.state.currentView === 'add'}>
+                <Add />
               </Page>
               <Page
                 className="about"

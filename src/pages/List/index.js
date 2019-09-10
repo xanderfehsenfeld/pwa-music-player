@@ -1,33 +1,40 @@
-import React, { PureComponent, Fragment } from 'react';
-import PropTypes from 'prop-types';
-import ListItem from '../../components/ListItem';
-import './style.scss';
+import React, { PureComponent, Fragment } from 'react'
+import PropTypes from 'prop-types'
+import ListItem from '../../components/ListItem'
+import './style.scss'
 
 class List extends PureComponent {
   constructor(props) {
-    super(props);
+    super(props)
 
-    this.onClick = this.onClick.bind(this);
+    this.onClick = this.onClick.bind(this)
   }
 
   onClick(evt) {
-    const id = Number(evt.currentTarget.attributes['data-id'].value);
+    const id = Number(evt.currentTarget.attributes['data-id'].value)
 
-    this.props.onClick(id);
+    this.props.onClick(id)
   }
 
   render() {
     return (
       <Fragment>
-        <ul className="track-list" >
-          {
-            this.props.tracks.map((track) => {
-              return <ListItem key={track.id} active={this.props.active} selectedTrack={this.props.track} onClick={this.onClick} track={track} />
-            })
-          }
+        <ul className="track-list">
+          {this.props.tracks.map((track) => {
+            return (
+              <ListItem
+                key={JSON.stringify(track)}
+                active={this.props.active}
+                selectedTrack={this.props.track}
+                onClick={this.onClick}
+                track={track}
+                downloaded={track.downloaded}
+              />
+            )
+          })}
         </ul>
       </Fragment>
-    );
+    )
   }
 }
 
@@ -42,4 +49,4 @@ List.propTypes = {
   onClick: PropTypes.func.isRequired,
 }
 
-export default List;
+export default List

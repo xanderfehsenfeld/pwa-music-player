@@ -1,11 +1,14 @@
 import React, { Component, Fragment } from 'react'
 import firebase from 'firebase/app'
 import 'firebase/firestore'
+import 'firebase/auth'
 
 import MediaButton from '../../components/MediaButton'
+import { ReactComponent as Github } from '../../icons/github.svg'
 import { ReactComponent as Headphones } from '../../icons/headphones.svg'
 import { ReactComponent as PlayButton } from '../../icons/play-arrow.svg'
 import './style.scss'
+import { apiKey, databaseURL, projectId } from '../../helpers/environment'
 
 class Home extends Component {
   componentDidMount = async () => {
@@ -16,14 +19,22 @@ class Home extends Component {
     })
 
     firebase.initializeApp({
-      apiKey: 'AIzaSyC7QbUsmT2VLsAJKN_PjQeY7BBjYRC9OXc',
+      apiKey,
+      databaseURL,
+      projectId,
       authDomain: 'music-hosting-service.firebaseapp.com',
-      databaseURL: 'https://music-hosting-service.firebaseio.com',
-      projectId: 'music-hosting-service',
-      storageBucket: 'music-hosting-service.appspot.com',
-      messagingSenderId: '638892593384',
-      appId: '1:638892593384:web:4b62f60fa99dda8760395d',
     })
+
+    firebase
+      .auth()
+      .signInAnonymously()
+      .catch(function(error) {
+        var errorCode = error.code
+        var errorMessage = error.message
+
+        console.log(error)
+        console.log('there was an error')
+      })
   }
 
   shouldComponentUpdate(prevProps) {
@@ -44,6 +55,20 @@ class Home extends Component {
           onClick={this.props.onStartClick}
           icon={<PlayButton width={24} />}
         />
+        <footer className="footer">
+          <a
+            href="https://github.com/xanderfehsenfeld/pwa-music-player"
+            aria-label="Github repository"
+            tabIndex={this.props.active ? '0' : '-1'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="github project"
+          >
+            {' '}
+            <Github fill="#b9b9b9" />
+          </a>
+          <span>hosted on firebase</span>{' '}
+        </footer>
       </Fragment>
     )
   }

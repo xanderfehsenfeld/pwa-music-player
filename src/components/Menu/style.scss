@@ -10,12 +10,8 @@
   padding: 20px 20px;
   z-index: 3;
 
-  .icon-button--close {
-    display: none;
-  }
-
-  .icon-button--back.active{
-    transition-delay: .1s;
+  .icon-button--back.active {
+    transition-delay: 0.1s;
   }
 
   &__title {
@@ -23,24 +19,36 @@
   }
 
   &__title.active {
-    transition-delay: .2s;
+    transition-delay: 0.2s;
   }
-
-  .icon-button--help.active {
-    transition-delay: .4s;
+  @keyframes fadeUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0.001;
+    }
+    to {
+      transform: translateY(0px);
+      opacity: 1;
+    }
+  }
+  .icon-button--help {
+    animation-name: fadeUp;
+    animation-duration: 0.3s;
+    animation-delay: 0.4s;
+    animation-fill-mode: both;
   }
 
   .hidden {
     transform: translateY(20px);
-    opacity: .001;
+    opacity: 0.001;
     transition-property: transform, opacity;
     transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
   }
 
   .active {
-    transition-duration: .3s, .2s;
+    transition-duration: 0.3s, 0.2s;
     transform: translateY(0);
-    opacity: .999;
+    opacity: 0.999;
   }
 
   &--home {
@@ -48,15 +56,12 @@
   }
 
   &--about {
-    .icon-button--close{
-      display: block;
-    }
-
     .icon-button--help {
       display: none;
     }
 
-    .menu__title, .icon-button--back {
+    .menu__title,
+    .icon-button--back {
       visibility: hidden;
     }
   }

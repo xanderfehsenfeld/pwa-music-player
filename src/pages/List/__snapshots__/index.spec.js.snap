@@ -4,64 +4,76 @@ exports[`Loader renders defaultProps 1`] = `
 <ul
   className="track-list"
 >
-  <li
-    className="row"
+  <div
+    className="MuiSkeleton-root MuiSkeleton-rect MuiSkeleton-animate"
+    ena={true}
+    style={
+      Object {
+        "height": 80,
+        "width": "100%",
+      }
+    }
   >
-    <button
-      className="btn"
-      data-id={1}
-      onClick={[Function]}
-      tabIndex="-1"
+    <li
+      className="row"
     >
-      <div
-        className="album"
+      <button
+        className="btn disabled"
+        data-id={1}
+        disabled={true}
+        onClick={[Function]}
+        tabIndex="-1"
       >
-        <img
-          alt="Album artwork from track title."
-          className="album__cover"
-          height="50"
-          src="artwork_url"
-          width="50"
-        />
-      </div>
-      <div
-        className="info"
-      >
-        <h2
-          className="info__track"
-        >
-          title
-        </h2>
-        <span
-          className="info__artist"
-        >
-          artist
-        </span>
         <div
-          className="controls"
+          className="album"
         >
+          <img
+            alt="Album artwork from track title."
+            className="album__cover"
+            height="50"
+            src="artwork_url"
+            width="50"
+          />
+        </div>
+        <div
+          className="info"
+        >
+          <h2
+            className="info__track"
+          >
+            title
+          </h2>
+          <span
+            className="info__artist"
+          >
+            downloading...
+          </span>
           <div
-            className="progress-bar"
+            className="controls"
           >
             <div
-              className="progress-bar__mask"
-              style={
-                Object {
-                  "transform": "scale(1, 1)",
-                }
-              }
+              className="progress-bar"
             >
               <div
-                className="progress-bar__progress"
+                className="progress-bar__mask"
+                style={
+                  Object {
+                    "transform": "scale(1, 1)",
+                  }
+                }
+              >
+                <div
+                  className="progress-bar__progress"
+                />
+              </div>
+              <div
+                className="progress-bar__bg"
               />
             </div>
-            <div
-              className="progress-bar__bg"
-            />
           </div>
         </div>
-      </div>
-    </button>
-  </li>
+      </button>
+    </li>
+  </div>
 </ul>
 `;
