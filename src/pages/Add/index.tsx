@@ -10,7 +10,7 @@ import './style.scss'
 const functions = firebase.functions()
 const startYoutubeDownload = functions.httpsCallable('startYoutubeDownload')
 
-const Add = () => {
+const Add = ({ switchToListView }: { switchToListView: () => void }) => {
   const [url, setUrl] = useState('')
   const [isPosting, setIsPosting] = useState(false)
   const [apiError, setApiError] = useState('')
@@ -26,6 +26,7 @@ const Add = () => {
             .then((result) => {
               console.log(result)
               setIsPosting(false)
+              switchToListView()
             })
             .catch((e) => {
               console.log(e)

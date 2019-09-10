@@ -1,6 +1,5 @@
 import React, { PureComponent, Fragment } from 'react'
 import PropTypes from 'prop-types'
-import ProgressBar from '../../components/ProgressBar'
 import MediaButton from '../../components/MediaButton'
 import AlbumCover from '../../components/AlbumCover'
 import convertSecondsToMMss from '../../helpers/timer'
@@ -10,6 +9,7 @@ import { ReactComponent as PauseButton } from '../../icons/pause.svg'
 import { ReactComponent as RepeatButton } from '../../icons/repeat-arrows.svg'
 import { ReactComponent as LinkButton } from '../../icons/link.svg'
 import './style.scss'
+import AdjustableProgressBar from '../../components/AdjustableProgressBar'
 
 class Detail extends PureComponent {
   onPlayClick = () => {
@@ -39,7 +39,10 @@ class Detail extends PureComponent {
               <h3 className="title">{this.props.track.title}</h3>
               <p className="artist">{this.props.track.artist}</p>
             </div>
-            <ProgressBar percent={this.props.track.percentage} />
+            <AdjustableProgressBar
+              percent={this.props.track.percentage}
+              onScrub={this.props.onScrub}
+            />
             <div className="detail__timing">
               <time className="time">
                 {convertSecondsToMMss(this.props.track.currentTime)}

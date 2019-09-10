@@ -64,7 +64,10 @@ class App extends PureComponent {
   updateState(tracks) {
     const updatedState = {
       tracks: tracks.map(
-        ({ url, plainTextName, duration, state, albumArtwork }, index) => {
+        (
+          { url, plainTextName, duration, state, albumArtwork, artist },
+          index,
+        ) => {
           return Object.assign(
             {},
             {
@@ -74,7 +77,7 @@ class App extends PureComponent {
               uri: url,
               duration: duration * 1000,
               favoritings_count: 0,
-              artist: '',
+              artist: artist || '',
               artwork_url: albumArtwork || '',
               title: plainTextName,
               permalink_url: url,
@@ -168,13 +171,18 @@ class App extends PureComponent {
   }
 
   timeupdate = (evt) => {
+    const percentComplete =
+      percent(evt.target.currentTime, evt.target.duration) / 100
     this.setState({
       track: {
         ...this.state.track,
         currentTime: evt.target.currentTime,
-        percentage: percent(evt.target.currentTime, evt.target.duration) / 100,
+        percentage: percentComplete,
       },
     })
+    if (percentComplete === 1) {
+      this.changeTrack(this.getNextTrack())
+    }
   }
 
   onListClick = (id) => {
@@ -305,10 +313,15 @@ class App extends PureComponent {
                   onPlayNext={this.onPlayNext}
                   onPlayPrev={this.onPlayPrev}
                   onPauseClick={this.onPauseClick}
+                  onScrub={this.audio && this.audio.setPercent}
                 />
               </Page>
               <Page className="add" active={this.state.currentView === 'add'}>
-                <Add />
+                <Add
+                  switchToListView={() =>
+                    this.history.push(`/list`, { view: 'list' })
+                  }
+                />
               </Page>
               <Page
                 className="about"
