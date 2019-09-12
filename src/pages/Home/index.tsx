@@ -24,13 +24,16 @@ class Home extends Component<IProps> {
         ;[...home].map((elmt) => elmt.classList.add('active'))
       }
     })
-
     firebase.initializeApp({
       apiKey,
       databaseURL,
       projectId,
       authDomain: 'music-hosting-service.firebaseapp.com',
     })
+    firebase.firestore().settings({
+      cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+    })
+    firebase.firestore().enablePersistence()
 
     firebase
       .auth()

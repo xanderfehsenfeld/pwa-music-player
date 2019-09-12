@@ -53,11 +53,24 @@ class App extends PureComponent {
 
   fetchPlayList = async () => {
     const db = firebase.firestore()
-
+    let cache
+    if ('caches' in window) {
+      cache = await caches.open('dynamic-fetches')
+    }
     db.collection('rips').onSnapshot((rips) => {
       const data = rips.docs.map((v) => v.data())
-
       this.updateState(data)
+
+      data.forEach(({ albumArtwork, url }) => {
+        if (cache) {
+          if (albumArtwork) {
+            cache.add(albumArtwork)
+          }
+          if (url) {
+            cache.add(url)
+          }
+        }
+      })
     })
   }
 
@@ -210,9 +223,7 @@ class App extends PureComponent {
 
   onPlayClick = (track) => {
     if (!track.played) {
-      this.audio.setAudioSource(
-        `${track.stream_url}?client_id=${process.env.REACT_APP_SOUNDCLOUD_APP_CLIENT_ID}`,
-      )
+      this.audio.setAudioSource(`${track.stream_url}`)
     }
 
     this.setState(() => {

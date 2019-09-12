@@ -26,7 +26,7 @@ export function register(config) {
     const publicUrl = new URL(process.env.PUBLIC_URL, window.location.href)
     if (publicUrl.origin !== window.location.origin) {
       console.error(
-        'Cannot start sercvice worker: PUBLIC_URL is on a different origin from what the page is served on.',
+        'Cannot start service worker: PUBLIC_URL is on a different origin from what the page is served on.',
       )
       // Our service worker won't work if PUBLIC_URL is on a different origin
       // from what our page is served on. This might happen if a CDN is used to
@@ -35,12 +35,11 @@ export function register(config) {
     }
 
     window.addEventListener('load', () => {
-      const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`
+      const customServiceWorker = `${process.env.PUBLIC_URL}/customServiceWorker.js`
 
       if (isLocalhost) {
         // This is running on localhost. Let's check if a service worker still exists or not.
-        checkValidServiceWorker(swUrl, config)
-
+        checkValidServiceWorker(customServiceWorker, config)
         // Add some additional logging to localhost, pointing developers to the
         // service worker/PWA documentation.
         navigator.serviceWorker.ready.then(() => {
@@ -51,7 +50,7 @@ export function register(config) {
         })
       } else {
         // Is not localhost. Just register service worker
-        registerValidSW(swUrl, config)
+        registerValidSW(customServiceWorker, config)
       }
     })
   }

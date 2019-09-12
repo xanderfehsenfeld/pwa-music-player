@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import App from './app'
-import * as serviceWorker from './serviceWorker'
+import * as serviceWorker from './registerServiceWorker'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 
