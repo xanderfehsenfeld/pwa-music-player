@@ -25,6 +25,7 @@ exports[`Menu renders defaultProps 1`] = `
     
     
     
+    
   </h1>
   <button
     aria-label="add a song via youtube link"

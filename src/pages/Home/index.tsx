@@ -10,12 +10,19 @@ import './style.scss'
 import { apiKey, databaseURL, projectId } from '../../helpers/environment'
 import GradientButton from '../../components/GradientButton'
 
-class Home extends Component {
+interface IProps {
+  active: boolean
+  onBeatsClick: () => void
+  onSongsClick: () => void
+}
+
+class Home extends Component<IProps> {
   componentDidMount = async () => {
     requestAnimationFrame(() => {
-      ;[...document.querySelector('.home').querySelectorAll('.hidden')].map(
-        (elmt) => elmt.classList.add('active'),
-      )
+      const home = document.querySelector('.home')!.querySelectorAll('.hidden')
+      if (home) {
+        ;[...home].map((elmt) => elmt.classList.add('active'))
+      }
     })
 
     firebase.initializeApp({
@@ -34,7 +41,7 @@ class Home extends Component {
       })
   }
 
-  shouldComponentUpdate(prevProps) {
+  shouldComponentUpdate(prevProps: IProps) {
     return prevProps.active !== this.props.active
   }
 
@@ -43,7 +50,6 @@ class Home extends Component {
       <Fragment>
         <h1 className="title hidden">React Music Player</h1>
         <Headphones className="icon hidden" width="100" fill="#ccc" />
-
         <div
           style={{
             width: 200,
@@ -54,28 +60,33 @@ class Home extends Component {
           }}
         >
           <GradientButton
-            onClick={this.props.onStartClick}
-            name="button show playlist"
-            disabled={false}
+            onClick={this.props.onBeatsClick}
+            name="button show beats"
           >
             {`Beats `}
             <PlayButton style={{ marginLeft: 10 }} width={15} />
           </GradientButton>
-        </div>
-        <footer className="footer">
-          <a
-            href="https://github.com/xanderfehsenfeld/pwa-music-player"
-            aria-label="Github repository"
-            tabIndex={this.props.active ? '0' : '-1'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="github project"
+          <br />
+          <GradientButton
+            onClick={this.props.onSongsClick}
+            name="button show songs"
           >
-            {' '}
-            <Github fill="#b9b9b9" />
-          </a>
-          <span>hosted on firebase</span>{' '}
-        </footer>
+            {`Songs `}
+            <PlayButton style={{ marginLeft: 10 }} width={15} />
+          </GradientButton>
+        </div>
+        <a
+          href="https://github.com/xanderfehsenfeld/pwa-music-player"
+          aria-label="Github repository"
+          tabIndex={this.props.active ? 0 : -1}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="github project"
+        >
+          {' '}
+          <Github fill="#b9b9b9" />
+        </a>
+        <span>hosted on firebase</span>{' '}
       </Fragment>
     )
   }

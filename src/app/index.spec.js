@@ -1,170 +1,163 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { shallow } from 'enzyme';
-import Audio from '../helpers/audio';
-import App from './index.js';
-import mockTracks from '../data/mockTracks';
-import mockPlaylistResponse from '../data/mockPlaylistResponse';
-import { audioContext } from '../helpers/audio/mock';
+import React from 'react'
+import ReactDOM from 'react-dom'
+import { shallow } from 'enzyme'
+import Audio from '../helpers/audio'
+import App from './index.js'
+import mockTracks from '../data/mockTracks'
+import mockPlaylistResponse from '../data/mockPlaylistResponse'
+import { audioContext } from '../helpers/audio/mock'
 
-jest.mock('../helpers/audio');
-jest.mock('../helpers/classList');
+jest.mock('../helpers/audio')
+jest.mock('../helpers/classList')
 
 describe('App', () => {
   beforeEach(() => {
-    Audio.mockClear();
-  });
+    Audio.mockClear()
+  })
 
   it('renders without crashing', () => {
-    const div = document.createElement('div');
+    const div = document.createElement('div')
 
-    ReactDOM.render(<App audioContext={audioContext()} />, div);
-    ReactDOM.unmountComponentAtNode(div);
-  });
-
+    ReactDOM.render(<App audioContext={audioContext()} />, div)
+    ReactDOM.unmountComponentAtNode(div)
+  })
 
   it('does not crash when image without artwork_url', async () => {
-    const component = shallow(<App audioContext={audioContext()} />);
-    const instance = component.instance();
+    const component = shallow(<App audioContext={audioContext()} />)
+    const instance = component.instance()
 
     expect(() => {
-      instance.updateSate(mockPlaylistResponse)
-    }).not.toThrow();
-  });
+      instance.updateState(mockPlaylistResponse)
+    }).not.toThrow()
+  })
 
   describe('onListClck', () => {
     it('selects new track', () => {
-      const component = shallow(<App audioContext={audioContext()} />);
-      const instance = component.instance();
+      const component = shallow(<App audioContext={audioContext()} />)
+      const instance = component.instance()
 
-      jest.spyOn(instance.history, 'push');
+      jest.spyOn(instance.history, 'push')
 
-      component.setState({ tracks: mockTracks });
+      component.setState({ tracks: mockTracks })
 
-      instance.onListClick(26814427);
+      instance.onListClick(26814427)
 
-      expect(instance.history.push).toBeCalledWith(`/detail`, { view: 'detail' });
-      expect(component.state('track').id).toEqual(mockTracks[0].id);
-    });
-  });
+      expect(instance.history.push).toBeCalledWith(`/detail`, {
+        view: 'detail',
+      })
+      expect(component.state('track').id).toEqual(mockTracks[0].id)
+    })
+  })
 
   describe('onPlayClick', () => {
     it('plays track', () => {
-      const component = shallow(<App audioContext={audioContext()} />);
-      const instance = component.instance();
+      const component = shallow(<App audioContext={audioContext()} />)
+      const instance = component.instance()
 
-      jest.spyOn(instance.audio, 'resume');
-      jest.spyOn(instance.audio, 'play');
-      jest.spyOn(instance, 'setState');
+      jest.spyOn(instance.audio, 'resume')
+      jest.spyOn(instance.audio, 'play')
+      jest.spyOn(instance, 'setState')
 
-      instance.onPlayClick({ ...mockTracks[0] });
+      instance.onPlayClick({ ...mockTracks[0] })
 
-      expect(component.state().track).toEqual({ ...Object.assign({}, mockTracks[0], { paused: false, playing: true, played: true }) });
-      expect(instance.audio.resume).toBeCalled();
-      expect(instance.audio.play).toBeCalled();
-    });
-  });
+      expect(component.state().track).toEqual({
+        ...Object.assign({}, mockTracks[0], {
+          paused: false,
+          playing: true,
+          played: true,
+        }),
+      })
+      expect(instance.audio.resume).toBeCalled()
+      expect(instance.audio.play).toBeCalled()
+    })
+  })
 
   describe('onPauseClick', () => {
     it('plays track', () => {
-      const component = shallow(<App audioContext={audioContext()} />);
-      const instance = component.instance();
+      const component = shallow(<App audioContext={audioContext()} />)
+      const instance = component.instance()
 
-      jest.spyOn(instance.audio, 'pause');
-      jest.spyOn(instance, 'setState');
+      jest.spyOn(instance.audio, 'pause')
+      jest.spyOn(instance, 'setState')
 
-      instance.onPauseClick({ ...mockTracks[0] });
+      instance.onPauseClick({ ...mockTracks[0] })
 
-      expect(component.state().track).toEqual({ ...Object.assign({}, mockTracks[0], { playing: false }) });
-      expect(instance.audio.pause).toBeCalled();
-    });
-  });
+      expect(component.state().track).toEqual({
+        ...Object.assign({}, mockTracks[0], { playing: false }),
+      })
+      expect(instance.audio.pause).toBeCalled()
+    })
+  })
 
   describe('onBackClick', () => {
     it('goes to previous page', () => {
-      const component = shallow(<App audioContext={audioContext()} />);
-      const instance = component.instance();
+      const component = shallow(<App audioContext={audioContext()} />)
+      const instance = component.instance()
 
-      jest.spyOn(instance.history, 'go');
+      jest.spyOn(instance.history, 'go')
 
-      instance.onBackClick();
+      instance.onBackClick()
 
-      expect(component.state().currentView).toBe('home');
-      expect(instance.history.go).toBeCalledWith(-1);
-    });
-  });
-
-  describe('onStartClick', () => {
-    it('goes to list of songs page', () => {
-      const component = shallow(<App audioContext={audioContext()} />);
-      const instance = component.instance();
-
-      jest.spyOn(instance.history, 'push');
-
-      instance.onStartClick();
-
-      expect(component.state().currentView).toBe('list');
-      expect(instance.history.push).toBeCalledWith('/list', { view: 'list' });
-    });
-  });
-
-  describe('onAboutClick', () => {
-    it('goes to about page', () => {
-      const component = shallow(<App audioContext={audioContext()} />);
-      const instance = component.instance();
-
-      jest.spyOn(instance.history, 'push');
-
-      instance.onAboutClick();
-
-      expect(component.state().currentView).toBe('about');
-      expect(instance.history.push).toBeCalledWith('/about', { view: 'about' });
-    });
-  });
+      expect(component.state().currentView).toBe('home')
+      expect(instance.history.go).toBeCalledWith(-1)
+    })
+  })
 
   describe('onPlayNext', () => {
     it('plays next track', () => {
-      const component = shallow(<App audioContext={audioContext()} />);
-      const instance = component.instance();
-      component.setState({ tracks: mockTracks, track: { ...mockTracks[0] } });
+      const component = shallow(<App audioContext={audioContext()} />)
+      const instance = component.instance()
+      component.setState({ tracks: mockTracks, track: { ...mockTracks[0] } })
 
-      jest.spyOn(instance, 'onPlayClick');
+      jest.spyOn(instance, 'onPlayClick')
 
-      instance.onPlayNext();
+      instance.onPlayNext()
 
-      expect(component.state().track).toEqual({ ...Object.assign({}, mockTracks[1], { paused: false, playing: true, played: true }) });
-      expect(instance.onPlayClick).toBeCalledWith({ ...mockTracks[1] });
-    });
-  });
+      expect(component.state().track).toEqual({
+        ...Object.assign({}, mockTracks[1], {
+          paused: false,
+          playing: true,
+          played: true,
+        }),
+      })
+      expect(instance.onPlayClick).toBeCalledWith({ ...mockTracks[1] })
+    })
+  })
 
   describe('onPlayPrev', () => {
     it('plays previous track', () => {
-      const component = shallow(<App audioContext={audioContext()} />);
-      const instance = component.instance();
-      component.setState({ tracks: mockTracks, track: { ...mockTracks[1] } });
+      const component = shallow(<App audioContext={audioContext()} />)
+      const instance = component.instance()
+      component.setState({ tracks: mockTracks, track: { ...mockTracks[1] } })
 
-      jest.spyOn(instance, 'onPlayClick');
+      jest.spyOn(instance, 'onPlayClick')
 
-      instance.onPlayPrev();
+      instance.onPlayPrev()
 
-      expect(component.state().track).toEqual({ ...Object.assign({}, mockTracks[0], { paused: false, playing: true, played: true }) });
-      expect(instance.onPlayClick).toBeCalledWith({ ...mockTracks[0] });
-    });
-  });
+      expect(component.state().track).toEqual({
+        ...Object.assign({}, mockTracks[0], {
+          paused: false,
+          playing: true,
+          played: true,
+        }),
+      })
+      expect(instance.onPlayClick).toBeCalledWith({ ...mockTracks[0] })
+    })
+  })
 
   describe('onRepeatClick', () => {
     it('keeps song on repeat', () => {
-      const component = shallow(<App audioContext={audioContext()} />);
-      const instance = component.instance();
+      const component = shallow(<App audioContext={audioContext()} />)
+      const instance = component.instance()
 
-      component.setState({ tracks: mockTracks, track: { ...mockTracks[1] } });
+      component.setState({ tracks: mockTracks, track: { ...mockTracks[1] } })
 
-      jest.spyOn(instance.audio, 'repeat');
+      jest.spyOn(instance.audio, 'repeat')
 
-      instance.onRepeatClick();
+      instance.onRepeatClick()
 
-      expect(component.state().repeat).toEqual(true);
-      expect(instance.audio.repeat).toBeCalledWith(true);
-    });
-  });
+      expect(component.state().repeat).toEqual(true)
+      expect(instance.audio.repeat).toBeCalledWith(true)
+    })
+  })
 })

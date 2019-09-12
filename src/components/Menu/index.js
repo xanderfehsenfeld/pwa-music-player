@@ -58,7 +58,8 @@ class Menu extends PureComponent {
           icon={<BackButton className="icon icon--back" width={16} />}
         />
         <h1 ref={this.title} className="hidden menu__title">
-          {this.props.activeView === 'list' ? 'Queue' : ''}
+          {this.props.activeView === 'beats' ? 'Beats' : ''}
+          {this.props.activeView === 'songs' ? 'Songs' : ''}
           {this.props.activeView === 'detail' ? 'Now playing' : ''}
           {this.props.activeView === 'add' ? 'Add' : ''}
         </h1>

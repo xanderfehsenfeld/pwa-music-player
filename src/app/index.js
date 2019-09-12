@@ -33,22 +33,22 @@ class App extends PureComponent {
         return { currentView: this.history.location.state.view || '/' }
       })
 
-      if (location.state.view === 'list' && !this.state.tracks[0].id) {
+      if (location.state.view === 'beats' && !this.state.tracks[0].id) {
         this.fetchPlayList()
       }
     })
 
     this.setupAudio()
-    if (this.history.location.pathname.includes('list')) {
+    if (this.history.location.pathname.includes('beats')) {
       this.history.push('/', { view: 'home' })
-      this.changeView('list')
+      this.changeView('beats')
     } else {
       this.history.push('/', { view: 'home' })
     }
   }
 
-  onStartClick = () => {
-    this.changeView('list')
+  onButtonClick = (button) => {
+    this.changeView(button)
   }
 
   fetchPlayList = async () => {
@@ -291,16 +291,24 @@ class App extends PureComponent {
           />
           <div className="page-wrapper">
             <Page className="home" active={this.state.currentView === 'home'}>
-              <Home onStartClick={this.onStartClick} />
+              <Home
+                onBeatsClick={() => this.onButtonClick('beats')}
+                onSongsClick={() => this.onButtonClick('songs')}
+              />
             </Page>
             <Suspense fallback={<Loader />}>
-              <Page className="list" active={this.state.currentView === 'list'}>
+              <Page
+                className={this.state.currentView}
+                active={['beats', 'songs'].includes(this.state.currentView)}
+              >
                 <List
+                  isBeats={this.state.currentView === 'beats'}
                   track={this.state.track}
                   tracks={this.state.tracks}
                   onClick={this.onListClick}
                 />
               </Page>
+
               <Page
                 className="detail"
                 active={this.state.currentView === 'detail'}
@@ -319,7 +327,7 @@ class App extends PureComponent {
               <Page className="add" active={this.state.currentView === 'add'}>
                 <Add
                   switchToListView={() =>
-                    this.history.push(`/list`, { view: 'list' })
+                    this.history.push(`/list`, { view: 'beats' })
                   }
                 />
               </Page>

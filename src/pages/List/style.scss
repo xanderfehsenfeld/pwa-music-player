@@ -1,6 +1,7 @@
 @import '../../app/styles/color';
 
-.list {
+.beats,
+.songs {
   overflow-y: auto;
   background: $base-color;
   z-index: 1;

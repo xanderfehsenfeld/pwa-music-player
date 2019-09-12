@@ -52,7 +52,9 @@ const Add = ({ switchToListView }: { switchToListView: () => void }) => {
         />
 
         <br />
-        <GradientButton disabled={!url || isPosting}>Download</GradientButton>
+        <GradientButton type={'submit'} disabled={!url || isPosting}>
+          Download
+        </GradientButton>
         <br />
       </ValidatorForm>
       <br />
