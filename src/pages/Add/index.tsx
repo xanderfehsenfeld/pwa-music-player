@@ -6,6 +6,7 @@ import 'firebase/functions'
 import * as firebase from 'firebase'
 
 import './style.scss'
+import GradientButton from '../../components/GradientButton'
 
 const functions = firebase.functions()
 const startYoutubeDownload = functions.httpsCallable('startYoutubeDownload')
@@ -51,21 +52,7 @@ const Add = ({ switchToListView }: { switchToListView: () => void }) => {
         />
 
         <br />
-        <Button
-          disabled={isPosting || !url}
-          variant={'contained'}
-          color="primary"
-          type="submit"
-          style={{
-            width: '100%',
-            backgroundImage:
-              isPosting || !url
-                ? undefined
-                : 'linear-gradient(to right top, #d16ba5, #c777b9, #ba83ca, #aa8fd8, #9a9ae1, #8aa7ec, #79b3f4, #69bff8, #52cffe, #41dfff, #46eefa, #5ffbf1)',
-          }}
-        >
-          Download
-        </Button>
+        <GradientButton disabled={!url || isPosting}>Download</GradientButton>
         <br />
       </ValidatorForm>
       <br />
