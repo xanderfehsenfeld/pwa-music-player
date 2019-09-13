@@ -33,7 +33,7 @@ class Home extends Component<IProps> {
     firebase.firestore().settings({
       cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
     })
-    firebase.firestore().enablePersistence()
+    firebase.firestore().enablePersistence({ synchronizeTabs: true })
 
     firebase
       .auth()
