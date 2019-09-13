@@ -1,5 +1,5 @@
 import React, { PureComponent, Suspense, lazy } from 'react'
-import { createBrowserHistory } from 'history'
+import { createBrowserHistory, History } from 'history'
 import firebase from 'firebase/app'
 
 import Home from '../pages/Home'
@@ -8,7 +8,6 @@ import Menu from '../components/Menu'
 import Page from '../components/Page'
 import Loader from '../components/Loader'
 import Audio from '../helpers/audio'
-import { initialState } from '../data'
 import './style.scss'
 
 const List = lazy(() => import('../pages/List'))
@@ -16,14 +15,70 @@ const About = lazy(() => import('../pages/About'))
 const Detail = lazy(() => import('../pages/Detail'))
 const Add = lazy(() => import('../pages/Add'))
 
-class App extends PureComponent {
-  constructor(props) {
+interface IProps {
+  audioContext: AudioContext
+}
+
+type IView = 'add' | 'about' | 'songs' | 'beats' | 'home' | '' | '/' | 'detail'
+
+interface IState {
+  tracks: ITrack[]
+  previousView: IView
+  currentView: IView
+  repeat: boolean
+  changingTrack: boolean
+  playlistLoaded?: boolean
+  currentTime?: number
+  track: CurrentTrack
+}
+
+interface CurrentTrack {
+  currentTime: number
+  percentage: number
+  paused: boolean
+  played: boolean
+  playing: boolean
+  artwork_url: string
+  index: number
+  id: number
+  artist: string
+  title: string
+}
+
+type ITrack = CurrentTrack & {
+  stream_url: string
+  uri: string
+  duration: number
+  favoritings_count: number
+  permalink_url: string
+  downloaded: boolean
+}
+
+class App extends PureComponent<IProps, IState> {
+  history: History<any>
+  audio?: Audio
+  constructor(props: IProps) {
     super(props)
 
     this.state = {
-      ...initialState,
+      tracks: [],
+      previousView: '/',
+      currentView: '',
+      repeat: false,
+      changingTrack: false,
+      track: {
+        title: 'test',
+        artist: 'test',
+        index: 1,
+        id: 1,
+        currentTime: 0,
+        percentage: 0,
+        paused: true,
+        played: false,
+        playing: false,
+        artwork_url: '',
+      },
     }
-
     this.history = createBrowserHistory()
   }
 
@@ -33,7 +88,10 @@ class App extends PureComponent {
         return { currentView: this.history.location.state.view || '/' }
       })
 
-      if (location.state.view === 'beats' && !this.state.tracks[0].id) {
+      if (
+        ['beats', 'songs'].includes(location.state.view) &&
+        !this.state.tracks.length
+      ) {
         this.fetchPlayList()
       }
     })
@@ -47,19 +105,53 @@ class App extends PureComponent {
     }
   }
 
-  onButtonClick = (button) => {
+  onButtonClick = (button: IView) => {
     this.changeView(button)
   }
 
   fetchPlayList = async () => {
     const db = firebase.firestore()
-    let cache
+    let cache: undefined | Cache
     if ('caches' in window) {
       cache = await caches.open('dynamic-fetches')
     }
     db.collection('rips').onSnapshot((rips) => {
-      const data = rips.docs.map((v) => v.data())
-      this.updateState(data)
+      const data = rips.docs.map((v) => v.data()) as {
+        url: string
+        plainTextName: string
+        duration: number
+        state: string
+        albumArtwork: string
+        artist: string
+      }[]
+
+      this.setState({
+        tracks: data.map(
+          (
+            { url, plainTextName, duration, state, albumArtwork, artist },
+            index,
+          ) => {
+            return Object.assign(
+              {},
+              {
+                ...this.state.track,
+                id: index,
+                stream_url: url,
+                uri: url,
+                duration: duration * 1000,
+                favoritings_count: 0,
+                artist: artist || '',
+                artwork_url: albumArtwork || '',
+                title: plainTextName,
+                permalink_url: url,
+                index,
+                downloaded: state === 'finished',
+              },
+            )
+          },
+        ),
+        playlistLoaded: true,
+      })
 
       data.forEach(({ albumArtwork, url }) => {
         if (cache) {
@@ -74,52 +166,15 @@ class App extends PureComponent {
     })
   }
 
-  updateState(tracks) {
-    const updatedState = {
-      tracks: tracks.map(
-        (
-          { url, plainTextName, duration, state, albumArtwork, artist },
-          index,
-        ) => {
-          return Object.assign(
-            {},
-            {
-              ...this.state.track,
-              id: index,
-              stream_url: url,
-              uri: url,
-              duration: duration * 1000,
-              favoritings_count: 0,
-              artist: artist || '',
-              artwork_url: albumArtwork || '',
-              title: plainTextName,
-              permalink_url: url,
-              index,
-              downloaded: state === 'finished',
-            },
-          )
-        },
-      ),
-      playlistLoaded: true,
-    }
-
-    this.setState(updatedState)
-  }
-
-  changeView(view) {
+  changeView(view: IView) {
     this.history.push(`/${view}`, { view })
   }
 
-  setTrack(track) {
-    this.setState(() => {
-      return {
-        track,
-        currentTime: 0,
-        paused: true,
-        played: false,
-        playing: false,
-        changingTrack: true,
-      }
+  setTrack(track: CurrentTrack) {
+    this.setState({
+      track,
+      currentTime: 0,
+      changingTrack: true,
     })
   }
 
@@ -130,27 +185,27 @@ class App extends PureComponent {
   getNextTrack() {
     const nextTrack = this.state.tracks[this.state.track.index + 1]
 
-    return nextTrack ? { ...nextTrack } : null
+    return nextTrack ? { ...nextTrack } : undefined
   }
 
   getPreviousTrack() {
     const prevTrack = this.state.tracks[this.state.track.index - 1]
 
-    return prevTrack ? { ...prevTrack } : null
+    return prevTrack ? { ...prevTrack } : undefined
   }
 
-  changeTrack(track) {
+  changeTrack(track?: ITrack) {
     if (this.canChangeTrack() && track) {
       this.setTrack(track)
       this.onPlayClick(track)
     }
   }
 
-  selectTrack = (id) => {
+  selectTrack = (id: number) => {
     return this.state.tracks.filter((track) => Number(id) === track.id)[0]
   }
 
-  setupAudio() {
+  setupAudio = () => {
     this.timeupdate = this.timeupdate.bind(this)
     this.audioStop = this.audioStop.bind(this)
 
@@ -183,7 +238,7 @@ class App extends PureComponent {
     })
   }
 
-  timeupdate = (evt) => {
+  timeupdate = (evt: { target: { currentTime: number; duration: any } }) => {
     const percentComplete =
       percent(evt.target.currentTime, evt.target.duration) / 100
     this.setState({
@@ -198,9 +253,9 @@ class App extends PureComponent {
     }
   }
 
-  onListClick = (id) => {
+  onListClick = (id: number) => {
     if (id !== this.state.track.id) {
-      this.audio.setAudioSource('')
+      this.audio!.setAudioSource('')
     }
 
     const track = {
@@ -221,28 +276,26 @@ class App extends PureComponent {
     this.onPlayClick(track)
   }
 
-  onPlayClick = (track) => {
+  onPlayClick = (track: ITrack) => {
     if (!track.played) {
-      this.audio.setAudioSource(`${track.stream_url}`)
+      this.audio!.setAudioSource(`${track.stream_url}`)
     }
 
-    this.setState(() => {
-      return {
-        track: {
-          ...track,
-          paused: false,
-          playing: true,
-          played: true,
-        },
-      }
+    this.setState({
+      track: {
+        ...track,
+        paused: false,
+        playing: true,
+        played: true,
+      },
     })
 
-    this.audio.resume()
-    this.audio.play()
+    this.audio!.resume()
+    this.audio!.play()
   }
 
-  onPauseClick = (track) => {
-    this.audio.pause()
+  onPauseClick = (track: CurrentTrack) => {
+    this.audio!.pause()
 
     this.setState(() => {
       return {
@@ -284,7 +337,7 @@ class App extends PureComponent {
       return { repeat }
     })
 
-    this.audio.repeat(repeat)
+    this.audio!.repeat(repeat)
   }
 
   render() {
@@ -303,6 +356,7 @@ class App extends PureComponent {
           <div className="page-wrapper">
             <Page className="home" active={this.state.currentView === 'home'}>
               <Home
+                active={this.state.currentView === 'home'}
                 onBeatsClick={() => this.onButtonClick('beats')}
                 onSongsClick={() => this.onButtonClick('songs')}
               />
@@ -313,6 +367,7 @@ class App extends PureComponent {
                 active={['beats', 'songs'].includes(this.state.currentView)}
               >
                 <List
+                  active={['beats', 'songs'].includes(this.state.currentView)}
                   isBeats={this.state.currentView === 'beats'}
                   track={this.state.track}
                   tracks={this.state.tracks}

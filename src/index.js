@@ -10,10 +10,6 @@ if (window.AudioContext) {
 }
 const rootElement = document.getElementById('root')
 
-// render(
-//   <App audioContext={window.audioContext} />,
-//   document.getElementById('root'),
-// )
 if (rootElement.hasChildNodes()) {
   hydrate(<App audioContext={window.audioContext} />, rootElement)
 } else {

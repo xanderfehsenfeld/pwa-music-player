@@ -57,6 +57,7 @@
   "devDependencies": {
     "@types/history": "^4.7.3",
     "@types/react-material-ui-form-validator": "^2.0.3",
+    "@types/webaudioapi": "0.0.27",
     "react-snap": "^1.23.0"
   }
 }
