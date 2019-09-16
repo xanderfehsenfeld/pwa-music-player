@@ -13,7 +13,7 @@ import './style.scss'
 import StatusBar from '../components/StatusBar'
 import { getRegisteredServiceWorkers } from '../helpers/serviceWorkerCache'
 import isBeat from '../pages/List/isBeat'
-import { findIndex } from 'lodash'
+import { findIndex, compact } from 'lodash'
 
 const List = lazy(() => import('../pages/List'))
 const Detail = lazy(() => import('../pages/Detail'))
@@ -105,8 +105,9 @@ class App extends PureComponent<IProps, IAppState> {
 
     this.setupAudio()
     if (this.history.location.pathname.includes('beats')) {
-      this.history.push('/', { view: 'home' })
       this.changeView('beats')
+    } else if (this.history.location.pathname.includes('songs')) {
+      this.changeView('songs')
     } else {
       this.history.push('/', { view: 'home' })
     }
@@ -118,18 +119,10 @@ class App extends PureComponent<IProps, IAppState> {
 
   fetchPlayList = async () => {
     const db = firebase.firestore()
-    let cache: undefined | Cache
-    let keys: undefined | string[]
-    const serviceWorkerIsRegistered =
-      (await getRegisteredServiceWorkers()).length > 0
-    if ('caches' in window && serviceWorkerIsRegistered) {
-      cache = await caches.open('dynamic-fetches')
-      keys = (await cache.keys()).map((v) => v.url)
-    }
 
     db.collection('rips')
       .orderBy('created')
-      .onSnapshot((rips) => {
+      .onSnapshot(async (rips) => {
         const data = rips.docs.map((v) => v.data()) as {
           url: string
           plainTextName: string
@@ -172,27 +165,46 @@ class App extends PureComponent<IProps, IAppState> {
           playlistLoaded: true,
         })
         let songsCached = 0
-        flatten(
-          data.map(({ albumArtwork, url }) => [albumArtwork, url]),
-        ).forEach((url) => {
-          if (cache && keys && !keys.includes(url)) {
-            cache.add(url)
-            songsCached++
-          }
-        })
+
+        let cache: undefined | Cache
+        let keys: undefined | string[]
+        const serviceWorkerIsRegistered =
+          (await getRegisteredServiceWorkers()).length > 0
+        if ('caches' in window && serviceWorkerIsRegistered) {
+          cache = await caches.open('dynamic-fetches')
+          keys = (await cache.keys()).map((v) => v.url)
+        }
+
+        if (cache !== undefined && keys) {
+          const notCached = compact(
+            flatten(data.map(({ albumArtwork, url }) => [albumArtwork, url])),
+          ).map((v) => encodeURI(v))
+
+          notCached.forEach((url) => {
+            if (keys && cache && !keys.includes(url)) {
+              cache.add(url)
+              if (url.includes('.mp3')) {
+                songsCached++
+              }
+            }
+          })
+        }
         this.setState({ songsCached })
       })
   }
 
   changeView(view: IView) {
-    if (view === 'beats' || view === 'songs') {
-      this.setState({
-        tracksInList: this.state.tracks.filter(({ title }) =>
-          view === 'beats' ? isBeat(title) : !isBeat(title),
-        ),
-      })
+    if (this.state.currentView !== view) {
+      this.history.push(`/${view}`, { view })
+
+      if (view === 'beats' || view === 'songs') {
+        this.setState({
+          tracksInList: this.state.tracks.filter(({ title }) =>
+            view === 'beats' ? isBeat(title) : !isBeat(title),
+          ),
+        })
+      }
     }
-    this.history.push(`/${view}`, { view })
   }
 
   setTrack(track: CurrentTrack) {
@@ -343,11 +355,12 @@ class App extends PureComponent<IProps, IAppState> {
   }
 
   onBackClick = () => {
-    this.history.go(-1)
-
-    this.setState(() => {
-      return { currentView: this.history.location.state.view || '/' }
-    })
+    if (['beats', 'songs'].includes(this.state.currentView)) {
+      this.history.replace('/', { view: 'home' })
+    } else {
+      this.history.go(-1)
+      this.setState({ currentView: this.history.location.state.view || '/' })
+    }
   }
 
   onAboutClick = () => {

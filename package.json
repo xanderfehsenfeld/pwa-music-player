@@ -32,7 +32,11 @@
     "node": ">=10"
   },
   "reactSnap": {
-    "inlineCss": true
+    "inlineCss": true,
+    "include": [
+      "/beats",
+      "/songs"
+    ]
   },
   "config-overrides-path": "node_modules/react-app-rewire-disable-chunks/config-overrides.js",
   "scripts": {
