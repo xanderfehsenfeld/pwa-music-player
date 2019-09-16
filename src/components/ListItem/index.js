@@ -4,6 +4,7 @@ import ProgressBar from '../ProgressBar'
 import albumThumbNail from '../../data/album-thumbnail.png'
 import './style.scss'
 import Skeleton from '@material-ui/lab/Skeleton'
+import CheckCircle from '@material-ui/icons/CheckCircle'
 
 class ListItem extends Component {
   shouldComponentUpdate(prevProps) {
@@ -23,14 +24,14 @@ class ListItem extends Component {
   render() {
     const { id, percentage, playing } = this.props.selectedTrack
     const { downloaded } = this.props
-
+    const trackIsPlaying = id === this.props.track.id && playing
     const Track = (
       <li className="row">
         <button
           disabled={!downloaded}
-          className={`${
-            id === this.props.track.id && playing ? 'btn playing' : 'btn'
-          } ${downloaded ? '' : 'disabled'}`}
+          className={`${trackIsPlaying ? 'btn playing' : 'btn'} ${
+            downloaded ? '' : 'disabled'
+          }`}
           tabIndex={this.props.active ? '0' : '-1'}
           onClick={this.props.onClick}
           data-id={this.props.track.id}

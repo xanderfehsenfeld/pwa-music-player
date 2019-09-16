@@ -1,6 +1,7 @@
 import React, { PureComponent, Suspense, lazy } from 'react'
 import { createBrowserHistory, History } from 'history'
 import firebase from 'firebase/app'
+import flatten from 'lodash/flatten'
 
 import Home from '../pages/Home'
 import percent from '../helpers/percent'
@@ -9,9 +10,12 @@ import Page from '../components/Page'
 import Loader from '../components/Loader'
 import Audio from '../helpers/audio'
 import './style.scss'
+import StatusBar from '../components/StatusBar'
+import { getRegisteredServiceWorkers } from '../helpers/serviceWorkerCache'
+import isBeat from '../pages/List/isBeat'
+import { findIndex } from 'lodash'
 
 const List = lazy(() => import('../pages/List'))
-const About = lazy(() => import('../pages/About'))
 const Detail = lazy(() => import('../pages/Detail'))
 const Add = lazy(() => import('../pages/Add'))
 
@@ -21,8 +25,9 @@ interface IProps {
 
 type IView = 'add' | 'about' | 'songs' | 'beats' | 'home' | '' | '/' | 'detail'
 
-interface IState {
+export interface IAppState {
   tracks: ITrack[]
+  tracksInList: ITrack[]
   previousView: IView
   currentView: IView
   repeat: boolean
@@ -30,6 +35,7 @@ interface IState {
   playlistLoaded?: boolean
   currentTime?: number
   track: CurrentTrack
+  songsCached?: number
 }
 
 interface CurrentTrack {
@@ -54,7 +60,7 @@ type ITrack = CurrentTrack & {
   downloaded: boolean
 }
 
-class App extends PureComponent<IProps, IState> {
+class App extends PureComponent<IProps, IAppState> {
   history: History<any>
   audio?: Audio
   constructor(props: IProps) {
@@ -62,6 +68,7 @@ class App extends PureComponent<IProps, IState> {
 
     this.state = {
       tracks: [],
+      tracksInList: [],
       previousView: '/',
       currentView: '',
       repeat: false,
@@ -112,21 +119,27 @@ class App extends PureComponent<IProps, IState> {
   fetchPlayList = async () => {
     const db = firebase.firestore()
     let cache: undefined | Cache
-    if ('caches' in window) {
+    let keys: undefined | string[]
+    const serviceWorkerIsRegistered =
+      (await getRegisteredServiceWorkers()).length > 0
+    if ('caches' in window && serviceWorkerIsRegistered) {
       cache = await caches.open('dynamic-fetches')
+      keys = (await cache.keys()).map((v) => v.url)
     }
-    db.collection('rips').onSnapshot((rips) => {
-      const data = rips.docs.map((v) => v.data()) as {
-        url: string
-        plainTextName: string
-        duration: number
-        state: string
-        albumArtwork: string
-        artist: string
-      }[]
 
-      this.setState({
-        tracks: data.map(
+    db.collection('rips')
+      .orderBy('created')
+      .onSnapshot((rips) => {
+        const data = rips.docs.map((v) => v.data()) as {
+          url: string
+          plainTextName: string
+          duration: number
+          state: string
+          albumArtwork: string
+          artist: string
+        }[]
+
+        const tracks = data.map(
           (
             { url, plainTextName, duration, state, albumArtwork, artist },
             index,
@@ -149,24 +162,36 @@ class App extends PureComponent<IProps, IState> {
               },
             )
           },
-        ),
-        playlistLoaded: true,
-      })
+        )
 
-      data.forEach(({ albumArtwork, url }) => {
-        if (cache) {
-          if (albumArtwork) {
-            cache.add(albumArtwork)
-          }
-          if (url) {
+        this.setState({
+          tracks,
+          tracksInList: tracks.filter(({ title }) =>
+            this.state.currentView === 'beats' ? isBeat(title) : !isBeat(title),
+          ),
+          playlistLoaded: true,
+        })
+        let songsCached = 0
+        flatten(
+          data.map(({ albumArtwork, url }) => [albumArtwork, url]),
+        ).forEach((url) => {
+          if (cache && keys && !keys.includes(url)) {
             cache.add(url)
+            songsCached++
           }
-        }
+        })
+        this.setState({ songsCached })
       })
-    })
   }
 
   changeView(view: IView) {
+    if (view === 'beats' || view === 'songs') {
+      this.setState({
+        tracksInList: this.state.tracks.filter(({ title }) =>
+          view === 'beats' ? isBeat(title) : !isBeat(title),
+        ),
+      })
+    }
     this.history.push(`/${view}`, { view })
   }
 
@@ -183,15 +208,24 @@ class App extends PureComponent<IProps, IState> {
   }
 
   getNextTrack() {
-    const nextTrack = this.state.tracks[this.state.track.index + 1]
+    const { track, tracksInList } = this.state
+    const indexOfTrack = findIndex(
+      tracksInList,
+      ({ title }) => title === track.title,
+    )
+    const nextTrack = tracksInList[indexOfTrack + 1] || tracksInList[0]
 
     return nextTrack ? { ...nextTrack } : undefined
   }
 
   getPreviousTrack() {
-    const prevTrack = this.state.tracks[this.state.track.index - 1]
-
-    return prevTrack ? { ...prevTrack } : undefined
+    const { track, tracksInList } = this.state
+    const indexOfTrack = findIndex(
+      tracksInList,
+      ({ title }) => title === track.title,
+    )
+    const previousTrack = tracksInList[indexOfTrack - 1]
+    return previousTrack ? { ...previousTrack } : undefined
   }
 
   changeTrack(track?: ITrack) {
@@ -341,6 +375,7 @@ class App extends PureComponent<IProps, IState> {
   }
 
   render() {
+    const { songsCached, tracksInList } = this.state
     return (
       <main className="app">
         <audio id="audio" crossOrigin="anonymous"></audio>
@@ -362,49 +397,44 @@ class App extends PureComponent<IProps, IState> {
               />
             </Page>
             <Suspense fallback={<Loader />}>
-              <Page
-                className={this.state.currentView}
-                active={['beats', 'songs'].includes(this.state.currentView)}
-              >
+              {['beats', 'songs'].includes(this.state.currentView) ? (
                 <List
                   active={['beats', 'songs'].includes(this.state.currentView)}
                   isBeats={this.state.currentView === 'beats'}
                   track={this.state.track}
-                  tracks={this.state.tracks}
+                  tracks={tracksInList}
                   onClick={this.onListClick}
                 />
-              </Page>
-
-              <Page
-                className="detail"
-                active={this.state.currentView === 'detail'}
-              >
-                <Detail
-                  track={this.state.track}
-                  repeat={this.state.repeat}
-                  onRepeatClick={this.onRepeatClick}
-                  onPlayClick={this.onPlayClick}
-                  onPlayNext={this.onPlayNext}
-                  onPlayPrev={this.onPlayPrev}
-                  onPauseClick={this.onPauseClick}
-                  onScrub={this.audio && this.audio.setPercent}
-                />
-              </Page>
-              <Page className="add" active={this.state.currentView === 'add'}>
-                <Add
-                  switchToListView={() =>
-                    this.history.push(`/list`, { view: 'beats' })
-                  }
-                />
-              </Page>
-              <Page
-                className="about"
-                active={this.state.currentView === 'about'}
-              >
-                <About />
-              </Page>
+              ) : null}
+              {this.state.currentView === 'detail' ? (
+                <Page
+                  className="detail"
+                  active={this.state.currentView === 'detail'}
+                >
+                  <Detail
+                    track={this.state.track}
+                    repeat={this.state.repeat}
+                    onRepeatClick={this.onRepeatClick}
+                    onPlayClick={this.onPlayClick}
+                    onPlayNext={this.onPlayNext}
+                    onPlayPrev={this.onPlayPrev}
+                    onPauseClick={this.onPauseClick}
+                    onScrub={this.audio && this.audio.setPercent}
+                  />
+                </Page>
+              ) : null}
+              {this.state.currentView === 'add' ? (
+                <Page className="add" active={this.state.currentView === 'add'}>
+                  <Add
+                    switchToListView={() =>
+                      this.history.push(`/list`, { view: 'beats' })
+                    }
+                  />
+                </Page>
+              ) : null}
             </Suspense>
           </div>
+          {songsCached ? <StatusBar songsCached={songsCached} /> : null}
         </div>
       </main>
     )

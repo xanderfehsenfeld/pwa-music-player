@@ -1,22 +1,22 @@
-import React, { PureComponent, Fragment } from 'react'
-import PropTypes from 'prop-types'
+import React, { Component } from 'react'
 import ListItem from '../../components/ListItem'
 import './style.scss'
 import isBeat from './isBeat'
+import { IAppState } from '../../app'
+import Page from '../../components/Page'
 
-interface IProps {
-  track: {
-    id: number
-    artwork_url: string
-    title: string
-    artist: string
-  }
-  tracks: any[]
+type IProps = {
+  track: Pick<IAppState['track'], 'id' | 'artwork_url' | 'artist' | 'title'>
+  tracks: IAppState['tracks']
   onClick: (evt: any) => void
   active: boolean
   isBeats: boolean
 }
-class List extends PureComponent<IProps> {
+interface IState {
+  savedKeys?: string[]
+}
+class List extends Component<IProps, IState> {
+  state: IState = {}
   constructor(props: IProps) {
     super(props)
 
@@ -31,26 +31,22 @@ class List extends PureComponent<IProps> {
 
   render() {
     return (
-      <Fragment>
+      <Page className={isBeat ? 'beats' : 'songs'} active={this.props.active}>
         <ul className="track-list">
-          {this.props.tracks
-            .filter(({ title }) =>
-              this.props.isBeats ? isBeat(title) : !isBeat(title),
+          {this.props.tracks.map((track) => {
+            return (
+              <ListItem
+                key={JSON.stringify(track)}
+                active={this.props.active}
+                selectedTrack={this.props.track}
+                onClick={this.onClick}
+                track={track}
+                downloaded={track.downloaded}
+              />
             )
-            .map((track) => {
-              return (
-                <ListItem
-                  key={JSON.stringify(track)}
-                  active={this.props.active}
-                  selectedTrack={this.props.track}
-                  onClick={this.onClick}
-                  track={track}
-                  downloaded={track.downloaded}
-                />
-              )
-            })}
+          })}
         </ul>
-      </Fragment>
+      </Page>
     )
   }
 }

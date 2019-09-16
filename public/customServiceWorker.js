@@ -14,10 +14,9 @@
 importScripts('/service-worker.js')
 
 self.addEventListener('fetch', function(event) {
-  event.respondWith(
-    caches
-      .match(event.request, { ignoreSearch: true })
-      .then(function(matchResponse) {
+  if (event.request.method === 'GET') {
+    event.respondWith(
+      caches.match(event.request).then(function(matchResponse) {
         return (
           matchResponse ||
           fetch(event.request).then(function(fetchResponse) {
@@ -28,5 +27,12 @@ self.addEventListener('fetch', function(event) {
           })
         )
       }),
-  )
+    )
+  } else {
+    return fetch(event.request).then(function(fetchResponse) {
+      return fetchResponse
+    })
+  }
 })
+
+self.skipWaiting()
